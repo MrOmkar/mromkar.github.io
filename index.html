@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title>Flood-It</title>
+		<style>
+			#canvasContainer{
+				width: 100%;
+				text-align: center;
+			}
+
+			canvas{
+				display: inline;;
+				border: 3px solid black;
+			}
+
+			#turnsCount, #gameVerdict, #gameOver{
+				font-size: 25px;
+			}
+		</style>
+		<script>
+			var f = function(){
+			var canvas = document.getElementById('floodItCanvas');
+			var c = canvas.getContext('2d');
+
+			var column = 0;
+			var row = 0;
+			var length = 14;
+			var rectLength = canvas.width/length;
+			var animationSpeed = 40;
+			
+			var gameOver = false;
+			var turns = 0;
+
+			var oldColor = 'red';
+			var selectedColor = 'red';
+			var colorsArray= ['red','yellow','#0b0','#fc6','purple','cyan','#66f','#f0f'];
+			var colors = [];
+			while(colorsArray.length!=0){
+				var randomIndex = Math.floor((Math.random() * colorsArray.length));
+				colors.push(colorsArray[randomIndex]);
+				colorsArray.splice(randomIndex, 1);
+			}
+			var matrix = [];
+			for(column = 0; column<length; column++){
+				var matrixRow = [];
+				for(row = 0; row<length; row++){
+					matrixRow.push({
+						color: colors[Math.floor((Math.random() * (Math.random() * 700+100)/100))]
+					});
+				}
+				matrix.push(matrixRow);
+			}
+			
+			c.beginPath();
+			draw();
+
+			function draw(){
+				var timeVal = 0;
+				for (var start = 0; start <length; start++) {
+					for (column = start, row = 0; row <=start; column--, row++){
+						var a = "hgfjh";
+						setTimeout(animate, timeVal, column, row);
+						//timeVal += 5;
+					}
+					timeVal += animationSpeed;
+				}
+				for (var end = length-2; end >=0; end--) {
+					for (column = 0, row = end; row >=0; column++, row--){
+						var a = "hgfjh";
+						setTimeout(animate, timeVal, length-1-column, length-1-row);
+						//timeVal += 5;
+					}
+					timeVal += animationSpeed;
+				}
+			}
+			function animate(column, row){
+				c.fillStyle = matrix[column][row].color;
+				c.fillRect(column*rectLength, row*rectLength, rectLength-1, rectLength-1);
+				c.strokeRect(column*rectLength, row*rectLength, rectLength, rectLength);
+						
+			}
+			function checkGameOver(){
+				var matrixColor = matrix[0][0].color;
+				var isGameOver =true;
+				for(column = 0; column < length; column++){
+					for(row = 0; row < length; row++){
+						if(matrix[column][row].color != matrixColor){
+							isGameOver = false;
+							break;
+						}
+					}
+				}
+
+				gameOver = isGameOver;
+			}
+
+			function recalculateMatrix(){
+				matrix[0][0].color = selectedColor;
+				recursiveCall(0, 0);
+				draw();
+				checkGameOver();
+				turns++;
+				var turnsCount = turns+"/25";
+				document.getElementById('turnsCount').innerHTML = turnsCount;
+				if(turns==25 && !gameOver){
+					console.log("You Lose");
+					document.getElementById('gameVerdict').innerHTML = "You Lose!";
+				}
+				if(turns<=25 && gameOver){
+					console.log("You Win");
+					document.getElementById('gameVerdict').innerHTML = "You Win!";
+				}
+				if(gameOver && turns>25){
+					console.log("Game Over");
+					console.log("Turns used :"+turns);
+					document.getElementById('gameOver').innerHTML = "Game Over!";
+				}
+			}
+
+			function recursiveCall(x, y){
+				//top call
+				if(y>0 && matrix[x][y-1].color == oldColor){
+					matrix[x][y-1].color = selectedColor;
+					recursiveCall(x, y-1);
+				}
+				//right call
+				if(x<length-1 && matrix[x+1][y].color == oldColor){
+					matrix[x+1][y].color = selectedColor;
+					recursiveCall(x+1, y);
+				}
+				//left call
+				if(x>0 && matrix[x-1][y].color == oldColor){
+					matrix[x-1][y].color = selectedColor;
+					recursiveCall(x-1, y);
+				}
+				//bottom call
+				if(y<length-1 && matrix[x][y+1].color == oldColor){
+					matrix[x][y+1].color = selectedColor;
+					recursiveCall(x, y+1);
+				}
+			}
+
+			function flood(event){
+				//console.log("mousedown called");
+				var x = event.clientX - canvas.getBoundingClientRect().left;
+				var y = event.clientY - canvas.getBoundingClientRect().top;
+				
+				var xCord = Math.floor(x/rectLength);
+				var yCord = Math.floor(y/rectLength);
+				oldColor = matrix[0][0].color;
+				selectedColor = matrix[xCord][yCord].color;
+				if(matrix[0][0].color!=selectedColor && !gameOver){
+					recalculateMatrix();
+				}
+			}
+
+			function newGame(event){
+				document.getElementById('gameVerdict').innerHTML = '';
+				document.getElementById('gameOver').innerHTML = '';
+				document.getElementById('turnsCount').innerHTML = "0/25";
+				canvas.removeEventListener('mousedown', flood, false);
+				document.getElementById('newGame').removeEventListener('click', newGame, false);
+				f();
+			}
+
+			canvas.addEventListener('mousedown', flood, false);
+			document.getElementById('newGame').addEventListener('click', newGame, false);
+
+
+		};
+
+		window.addEventListener('load', f, false);
+		</script>
+	</head>
+	<body>
+		<div id="canvasContainer">
+			<h2>Flood-It</h2>
+			<canvas id="floodItCanvas" width="336" height="336"></canvas>
+			<div id="turnsCount">0/25</div>
+			<div id="gameVerdict"></div>
+			<div id="gameOver"></div>
+			<p>Click cells. Fill the board with a single color.</p>
+			<input id="newGame" type="submit" value="New Game">
+		</div>
+	</body>
+</html>
